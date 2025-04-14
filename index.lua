@@ -239,26 +239,18 @@ function get_hand_type(tdeck)
         if #stdeck == 2 then
             if string.sub(stdeck[1], 1, 1) == string.sub(stdeck[2], 1, 1) then
                 return "Pair"
-            else
-                return "High Card"
             end
         else
             if #stdeck == 3 then
                 if string.sub(stdeck[1], 1, 1) == string.sub(stdeck[2], 1, 1) and string.sub(stdeck[2], 1, 1) == string.sub(stdeck[3], 1, 1) then
                     return "Three of a Kind"
-                else
-                    return "High Card"
                 end
             else
                 if #stdeck == 4 then
                     if #card_amount_array == 1 then
                         return "Four of a Kind"
-                    else
-                        if #card_amount_array == 2 and card_amount_array[1] == 2 and card_amount_array[2] == 2 then
-                            return "Two Pair"
-                        else
-                            return "High Card"
-                        end
+                    elseif #card_amount_array == 2 and card_amount_array[1] == 2 and card_amount_array[2] == 2 then
+                        return "Two Pair"
                     end
                 else
                     if #stdeck == 5 then
@@ -294,8 +286,6 @@ function get_hand_type(tdeck)
                             table.sort(card_amount_array)
                             if card_amount_array[1] == 2 and card_amount_array[2] == 3 then
                                 return "Full House"
-                            else
-                                return "High Card"
                             end
                         end
                     else
