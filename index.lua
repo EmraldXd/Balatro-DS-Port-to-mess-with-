@@ -140,7 +140,9 @@ shop_sign_timer:start()
 blind_colour_timer = Timer.new()
 
 -- TO DO
--- make get poker hand work with 5 cards and stuff
+-- Fix face cards being read as 10s, allowing a straight to be made of A, Q, 9, 8, 7
+-- Fix cards that aren't a part of a hand scoring points
+-- Fix some jokers not working
 
 timer = Timer.new()
 timer:start()
@@ -233,67 +235,106 @@ function get_hand_type(tdeck)
     end
     table.sort(card_amount_array)
 
-    if #stdeck == 1 then
-        return "High Card"
-    else
-        if #stdeck == 2 then
-            if string.sub(stdeck[1], 1, 1) == string.sub(stdeck[2], 1, 1) then
-                return "Pair"
+    if #stdeck > 0 then
+
+        --We test for each from Royal Flush to High Card so that unless no other hands are detected, it will default to High Card
+
+        --This checks for all 5 card combinations because I know nothing about lua and couldnt even begin to recreate this (EmraldXD)
+        if #stdeck == 5 then
+
+            flush = false
+            straight = false
+            if string.sub(stdeck[1], 2, 2) == string.sub(stdeck[2], 2, 2) and string.sub(stdeck[2], 2, 2) == string.sub(stdeck[3], 2, 2) and string.sub(stdeck[3], 2, 2) == string.sub(stdeck[4], 2, 2) and string.sub(stdeck[4], 2, 2) == string.sub(stdeck[5], 2, 2) then
+                flush = true
             end
-        else
-            if #stdeck == 3 then
-                if string.sub(stdeck[1], 1, 1) == string.sub(stdeck[2], 1, 1) and string.sub(stdeck[2], 1, 1) == string.sub(stdeck[3], 1, 1) then
-                    return "Three of a Kind"
-                end
-            else
-                if #stdeck == 4 then
-                    if #card_amount_array == 1 then
-                        return "Four of a Kind"
-                    elseif #card_amount_array == 2 and card_amount_array[1] == 2 and card_amount_array[2] == 2 then
-                        return "Two Pair"
-                    end
+
+            if convert_rank_to_num(string.sub(stdeck[1], 1, 1)) - 1 == convert_rank_to_num(string.sub(stdeck[2], 1, 1)) and convert_rank_to_num(string.sub(stdeck[1], 1, 1)) - 2 == convert_rank_to_num(string.sub(stdeck[3], 1, 1)) and convert_rank_to_num(string.sub(stdeck[1], 1, 1)) - 3 == convert_rank_to_num(string.sub(stdeck[4], 1, 1)) and convert_rank_to_num(string.sub(stdeck[1], 1, 1)) - 4 == convert_rank_to_num(string.sub(stdeck[5], 1, 1)) then
+                straight = true
+            end
+
+            if flush then
+                if convert_rank_to_num(string.sub(stdeck[1], 1, 1)) > 9 and convert_rank_to_num(string.sub(stdeck[2], 1, 1)) > 9 and convert_rank_to_num(string.sub(stdeck[3], 1, 1)) > 9 and convert_rank_to_num(string.sub(stdeck[4], 1, 1)) > 9 and convert_rank_to_num(string.sub(stdeck[5], 1, 1)) > 9 then
+                    return "Royal Flush"
                 else
-                    if #stdeck == 5 then
-                        flush = false
-                        straight = false
-                        if string.sub(stdeck[1], 2, 2) == string.sub(stdeck[2], 2, 2) and string.sub(stdeck[2], 2, 2) == string.sub(stdeck[3], 2, 2) and string.sub(stdeck[3], 2, 2) == string.sub(stdeck[4], 2, 2) and string.sub(stdeck[4], 2, 2) == string.sub(stdeck[5], 2, 2) then
-                            flush = true
-                        end
-
-                        if convert_rank_to_num(string.sub(stdeck[1], 1, 1)) - 1 == convert_rank_to_num(string.sub(stdeck[2], 1, 1)) and convert_rank_to_num(string.sub(stdeck[1], 1, 1)) - 2 == convert_rank_to_num(string.sub(stdeck[3], 1, 1)) and convert_rank_to_num(string.sub(stdeck[1], 1, 1)) - 3 == convert_rank_to_num(string.sub(stdeck[4], 1, 1)) and convert_rank_to_num(string.sub(stdeck[1], 1, 1)) - 4 == convert_rank_to_num(string.sub(stdeck[5], 1, 1)) then
-                            straight = true
-                        end
-
-                        if flush then
-                            if convert_rank_to_num(string.sub(stdeck[1], 1, 1)) > 9 and convert_rank_to_num(string.sub(stdeck[2], 1, 1)) > 9 and convert_rank_to_num(string.sub(stdeck[3], 1, 1)) > 9 and convert_rank_to_num(string.sub(stdeck[4], 1, 1)) > 9 and convert_rank_to_num(string.sub(stdeck[5], 1, 1)) > 9 then
-                                return "Royal Flush"
-                            else
-                                if straight then
-                                    return "Straight Flush"
-                                else
-                                    return "Flush"
-                                end
-                            end
-                        elseif straight then
-                            return "Straight"
-                        else
-                            local card_amount_array = {}
-
-                            for i, v in pairs(card_amounts) do
-                                table.insert(card_amount_array, v)
-                            end
-
-                            table.sort(card_amount_array)
-                            if card_amount_array[1] == 2 and card_amount_array[2] == 3 then
-                                return "Full House"
-                            end
-                        end
+                    if straight then
+                        return "Straight Flush"
                     else
-                        return ""
+                        return "Flush"
+                    end
+                end
+            elseif straight then
+                return "Straight"
+            else
+                local card_amount_array = {}
+
+                for i, v in pairs(card_amounts) do
+                    table.insert(card_amount_array, v)
+                end
+
+                table.sort(card_amount_array)
+                 if card_amount_array[1] == 2 and card_amount_array[2] == 3 then
+                    return "Full House"
+                end
+            end 
+        end
+
+        --We test for four card hands WITH a potential extra card
+        if #stdeck >= 4 then
+            local matches = 0
+            for i = 1, #stdeck do
+                for j = i + 1, #stdeck do
+                for k = j + 1, #stdeck do
+                for l = k + 1, #stdeck do
+                if string.sub(stdeck[i], 1, 1) == string.sub(stdeck[j], 1, 1) and string.sub(stdeck[j], 1, 1) == string.sub(stdeck[k], 1, 1) and string.sub(stdeck[k], 1, 1) == string.sub(stdeck[l], 1, 1) then
+                    return "Four of a Kind"
+                end
+                end
+                end
+                end
+            end
+
+            local pairs = 0
+            for i = 1, #stdeck do
+            for j = i + 1, #stdeck do
+                if string.sub(stdeck[i], 1, 1) == string.sub(stdeck[j], 1, 1) then
+                    pairs = pairs + 1
+                end
+            end
+            end
+            if pairs == 2 then
+                return "Two Pair"
+            end
+        end
+
+        --We test for Three of a Kind
+        if #stdeck >= 3 then
+        for i = 1, #stdeck do
+            for j = i + 1, #stdeck do 
+                for k = j + 1, #stdeck do
+                    if string.sub(stdeck[i], 1, 1) == string.sub(stdeck[j], 1, 1) and string.sub(stdeck[j], 1, 1) == string.sub(stdeck[k], 1, 1) then
+                        return "Three of a Kind"
                     end
                 end
             end
         end
+        end
+
+        --We test for pairs
+        if #stdeck >= 2 then
+        for i = 1, #stdeck do
+            for j = i + 1, #stdeck do
+            if string.sub(stdeck[i], 1, 1) == string.sub(stdeck[j], 1, 1) then
+                return "Pair" 
+            end
+            end
+        end
+        end
+
+
+        return "High Card"
+        
+    else
+        return ""
     end
 end
 
